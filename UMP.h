@@ -19,7 +19,8 @@ public:
 	UMP &operator+=(const UMP &b);
 	UMP operator-(const UMP &b) const;
 	UMP &operator-=(const UMP &b);
-	UMP operator*(const unsigned int b);
+	UMP operator*(const unsigned int b) const;
+	UMP operator*(const UMP &_b) const;
 
 protected:
 	UMP &check();
