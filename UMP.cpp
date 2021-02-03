@@ -91,6 +91,32 @@ UMP &UMP::operator+=(const UMP &b) {
 	return a = a + b;
 }
 
+UMP UMP::operator<<(unsigned int a) const {
+	UMP ans(*this);
+	ans.insert(ans.begin(), a / 32, 0);
+	a = a % 32;
+	ans.resize(ans.size() + 1);
+	for (int i = ans.size() - 1; i > 0; --i) {
+		ans[i] |= ans[i - 1] >> (32 - a);
+		ans[i - 1] <<= a;
+	}
+	return ans.check();
+}
+
+UMP UMP::operator>>(unsigned int a) const {
+	UMP ans(*this);
+	if (a >= 32) {
+		ans.erase(ans.begin(), ans.begin() + (a / 32 - 1));
+		a = a % 32;
+	}
+	for (int i = 0; i < ans.size() - 1; ++i) {
+		ans[i] >>= a;
+		ans[i] |= ans[i + 1] << (32 - a);
+	}
+	ans[ans.size() - 1] >>= a;
+	return ans.check();
+}
+
 UMP UMP::operator-(const UMP &b) const {
 	int cmpres = cmp(*this, b);
 	const UMP *pa = nullptr, *pb = nullptr; // require *pa > *pb
@@ -135,22 +161,25 @@ UMP &UMP::operator-=(const UMP &b) {
 	return a = a - b;
 }
 
-UMP UMP::operator*(const unsigned int b) const {
+UMP operator*(const UMP &a, const unsigned int b) {
 	UMP ans;
-	ans.assign(size() + 1,0);
+	ans.assign(a.size() + 1,0);
 	unsigned long long res = 0;
-	for (int i = 0; i < size(); ++i) {
-		res += b * at(i);
+	for (int i = 0; i < a.size(); ++i) {
+		res += b * a.at(i);
 		ans[i] = (unsigned int)res;
 		res >>= 32;
 	}
-	ans[size()] = res;
+	ans[a.size()] = res;
 	return ans.check();
+}
+
+UMP operator*(const unsigned int a, const UMP &b) {
+	return b * a;
 }
 
 UMP UMP::operator*(const UMP &_b) const {
 	const UMP *a, *b;
-	UMP a1, a2, b1, b2;
 	if (size() < _b.size()) {
 		a = &_b;
 		b = this;
@@ -162,30 +191,74 @@ UMP UMP::operator*(const UMP &_b) const {
 	if (b->size() == 1) {
 		return (*a) * (b->at(0));
 	}
-	int c = a->size() / 2;
-	vector<unsigned int>::const_iterator iter1 = a->begin() + c;
-	a1.assign(iter1, a->end());
-	a2.assign(a->begin(), iter1);
-	if (a->size() >= 2 * b->size()) {
-		b1 = zero;
-		b2 = *b;
-	}
-	else {
-		vector<unsigned int>::const_iterator iter2 = b->begin() + c;
-		b1.assign(iter2, b->end());
-		b2.assign(b->begin(), iter2);
-	}
-	UMP x1, x2, x3;
-	x1 = a1 * b1;
-	x3 = a2 * b2;
-	x2 = (a1 + a2) * (b1 + b2) - x1 - x3;
-	for (int i = 0; i < c; ++i) {
-		x1.push_back(0);
-		x1.push_back(0);
-		x2.push_back(0);
-	}
-	return x1 + x2 + x3;
+	UMP a1, a2(a->at(0)), b1, b2(b->at(0));
+	a1.assign(a->begin(), a->end() - 1);
+	b1.assign(b->begin(), b->end() - 1);
+	UMP x= a1 * b1, y = a2 * b2, z = (a1 + a2) * (b1 + b2) - (x + y);
+	x.insert(x.begin(), 2, 0);
+	y.insert(y.begin(), 0);
+	return x + y + z;
+	// int c = a->size() / 2;
+	// vector<unsigned int>::const_iterator iter1 = a->begin() + c;
+	// a1.assign(iter1, a->end());
+	// a2.assign(a->begin(), iter1);
+	// if (a->size() >= 2 * b->size()) {
+	// 	b1 = zero;
+	// 	b2 = *b;
+	// }
+	// else {
+	// 	vector<unsigned int>::const_iterator iter2 = b->begin() + c;
+	// 	b1.assign(iter2, b->end());
+	// 	b2.assign(b->begin(), iter2);
+	// }
+	// UMP x1, x2, x3;
+	// x1 = a1 * b1;
+	// x3 = a2 * b2;
+	// x2 = (a1 + a2) * (b1 + b2) - x1 - x3;
+	// for (int i = 0; i < c; ++i) {
+	// 	x1.push_back(0);
+	// 	x1.push_back(0);
+	// 	x2.push_back(0);
+	// }
+	// return x1 + x2 + x3;
 }
+
+UMP& UMP::operator*=(const unsigned int b) {
+	return *this = *this * b;
+}
+
+UMP &UMP::operator*=(const UMP &_b) {
+	*this = *this * _b;
+}
+#error "NOT FINISHED YET!"
+UMP operator/(UMP a, UMP b) {
+	if (a.size() < b.size()) {
+		return 0;
+	}
+	UMP ans;
+	unsigned int d;
+	{
+		int _a, _b;
+		unsigned int tmp1 = a.back();
+		for (_a = 0; _a < 32 && tmp1 != 0; ++_a, tmp1 >>= 1) {}
+		unsigned int tmp2 = b.back();
+		for (_b = 0; _b < 32 && tmp2 != 0; ++_b, tmp2 >>= 1) {}
+		if (_a - _b < 0 && a.size() == b.size()) {
+			return 0;
+		}
+		d = (a.size() - b.size()) * 32 + _a - _b;
+		b = b << d;
+	}
+	for (int i = 0; i <= d; ++i, b = b >> 1) {
+		ans = ans << 1;
+		if (a > b) {
+			ans += 1;
+			a -= b;
+		}
+	}
+	return ans;
+}
+
 
 UMP &UMP::check() {
 	while (this->at(size() - 1) == 0 && size() != 1) {

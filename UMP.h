@@ -15,12 +15,19 @@ public:
 	bool operator>=(const UMP &b) const;
 	bool operator<=(const UMP &b) const;
 
+	UMP operator<<(unsigned int a) const;
+	UMP operator>>(unsigned int a) const;
+
 	UMP operator+(const UMP &b) const;
 	UMP &operator+=(const UMP &b);
 	UMP operator-(const UMP &b) const;
 	UMP &operator-=(const UMP &b);
-	UMP operator*(const unsigned int b) const;
+	friend UMP operator*(const UMP &a, const unsigned int b);
+	friend UMP operator*(const unsigned int a, const UMP &b);
 	UMP operator*(const UMP &_b) const;
+	UMP &operator*=(const unsigned int b);
+	UMP &operator*=(const UMP &_b);
+	friend UMP operator/(UMP a, UMP b);
 
 protected:
 	UMP &check();
