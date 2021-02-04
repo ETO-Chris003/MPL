@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <iostream>
 
 class UMP : public ::std::vector<unsigned int> {
 public:
@@ -27,8 +28,13 @@ public:
 	UMP operator*(const UMP &_b) const;
 	UMP &operator*=(const unsigned int b);
 	UMP &operator*=(const UMP &_b);
-	friend UMP operator/(UMP a, UMP b);
 
+	friend std::pair<UMP, UMP> div(UMP a, UMP b); // first for quotient and second for remainder
+	friend UMP operator/(const UMP &a, const UMP &b);
+	friend UMP operator%(const UMP &a, const UMP &b);
+
+public:
+	friend std::ostream &operator<<(std::ostream &out, UMP a);
 protected:
 	UMP &check();
 };

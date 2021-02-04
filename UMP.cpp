@@ -1,5 +1,6 @@
 #include "UMP.h"
 #include <algorithm>
+#include <stack>
 using namespace std;
 
 static const UMP zero(0), one(1);
@@ -72,16 +73,22 @@ UMP UMP::operator+(const UMP &b) const {
 	}
 	UMP a;
 	a.resize(size() + 1);
-	unsigned long long res;
+	union {
+		unsigned long long ull;
+		struct {
+			unsigned int lower, higher;
+		} split;
+	} res;
+	// unsigned long long res;
 	for (int i = 0; i < b.size(); ++i) {
-		res = at(i) + (unsigned long long)b[i] + a[i];
-		a[i] = (unsigned int)res;
-		a[i + 1] = res >> (8 * sizeof(unsigned int));
+		res.ull = at(i) + (unsigned long long)b[i] + a[i];
+		a[i] = res.split.lower;
+		a[i + 1] = res.split.higher;
 	}
 	for (int i = b.size(); i < size(); ++i) {
-		res = at(i) + (unsigned long long)a[i];
-		a[i] = (unsigned int)res;
-		a[i + 1] = res >> (8 * sizeof(unsigned int));
+		res.ull = at(i) + (unsigned long long)a[i];
+		a[i] = res.split.lower;
+		a[i + 1] = res.split.higher;
 	}
 	return a.check();
 }
@@ -93,12 +100,16 @@ UMP &UMP::operator+=(const UMP &b) {
 
 UMP UMP::operator<<(unsigned int a) const {
 	UMP ans(*this);
-	ans.insert(ans.begin(), a / 32, 0);
-	a = a % 32;
-	ans.resize(ans.size() + 1);
-	for (int i = ans.size() - 1; i > 0; --i) {
-		ans[i] |= ans[i - 1] >> (32 - a);
-		ans[i - 1] <<= a;
+	if (a / 32 != 0) {
+		ans.insert(ans.begin(), a / 32, 0);
+		a = a % 32;
+	}
+	if (a != 0) {
+		ans.resize(ans.size() + 1);
+		for (int i = ans.size() - 1; i > 0; --i) {
+			ans[i] |= (ans[i - 1] >> (32 - a));
+			ans[i - 1] <<= a;
+		}
 	}
 	return ans.check();
 }
@@ -109,11 +120,13 @@ UMP UMP::operator>>(unsigned int a) const {
 		ans.erase(ans.begin(), ans.begin() + (a / 32 - 1));
 		a = a % 32;
 	}
-	for (int i = 0; i < ans.size() - 1; ++i) {
-		ans[i] >>= a;
-		ans[i] |= ans[i + 1] << (32 - a);
+	if (a != 0) {
+		for (int i = 0; i < ans.size() - 1; ++i) {
+			ans[i] >>= a;
+			ans[i] |= (ans[i + 1] << (32 - a));
+		}
+		ans[ans.size() - 1] >>= a;
 	}
-	ans[ans.size() - 1] >>= a;
 	return ans.check();
 }
 
@@ -131,28 +144,35 @@ UMP UMP::operator-(const UMP &b) const {
 		pa = this;
 		pb = &b;
 	}
-	UMP _b = (*pb);
-	int bsize = _b.size();
-	for (int i = 0; i < bsize; ++i) {
-		_b[i] = ~_b[i];
+	UMP _a = (*pa);
+	int asize = _a.size();
+	for (int i = 0; i < asize; ++i) {
+		_a[i] = ~_a[i];
 	}
 #warning _b++ required
-	_b = _b + one;
-	_b.resize(bsize);
+	_a = _a + one;
 	UMP ret;
+	ret = _a + *pb;
+	int retsize = ret.size();
+	for (int i = 0; i < retsize; ++i) {
+		ret[i] = ~ret[i];
+	}
+	ret += 1;
+	// _b.resize(bsize);
+	// UMP ret;
 
-	ret.resize(pa->size() + 1);
-	unsigned long long res;
-	for (int i = 0; i < _b.size(); ++i) {
-		res = pa->at(i) + (unsigned long long)_b.at(i) + ret[i];
-		ret[i] = (unsigned int)res;
-		ret[i + 1] = res >> (8 * sizeof(unsigned int));
-	}
-	for (int i = _b.size(); i < pa->size(); ++i) {
-		res = pa->at(i) + ((unsigned long long)(-1)) + (unsigned long long)ret[i];
-		ret[i] = (unsigned int)res;
-		ret[i + 1] = res >> (8 * sizeof(unsigned int));
-	}
+	// ret.resize(pa->size() + 1);
+	// unsigned long long res;
+	// for (int i = 0; i < _b.size(); ++i) {
+	// 	res = pa->at(i) + (unsigned long long)_b.at(i) + ret[i];
+	// 	ret[i] = (unsigned int)res;
+	// 	ret[i + 1] = res >> (8 * sizeof(unsigned int));
+	// }
+	// for (int i = _b.size(); i < pa->size(); ++i) {
+	// 	res = pa->at(i) + ((unsigned long long)(-1)) + (unsigned long long)ret[i];
+	// 	ret[i] = (unsigned int)res;
+	// 	ret[i + 1] = res >> (8 * sizeof(unsigned int));
+	// }
 	return ret.check();
 }
 
@@ -230,10 +250,10 @@ UMP& UMP::operator*=(const unsigned int b) {
 UMP &UMP::operator*=(const UMP &_b) {
 	*this = *this * _b;
 }
-#error "NOT FINISHED YET!"
-UMP operator/(UMP a, UMP b) {
+
+std::pair<UMP, UMP> div(UMP a, UMP b) {
 	if (a.size() < b.size()) {
-		return 0;
+		return make_pair(0, a);
 	}
 	UMP ans;
 	unsigned int d;
@@ -244,21 +264,45 @@ UMP operator/(UMP a, UMP b) {
 		unsigned int tmp2 = b.back();
 		for (_b = 0; _b < 32 && tmp2 != 0; ++_b, tmp2 >>= 1) {}
 		if (_a - _b < 0 && a.size() == b.size()) {
-			return 0;
+			return make_pair(0, a);
 		}
 		d = (a.size() - b.size()) * 32 + _a - _b;
 		b = b << d;
 	}
 	for (int i = 0; i <= d; ++i, b = b >> 1) {
 		ans = ans << 1;
-		if (a > b) {
+		if (a >= b) {
 			ans += 1;
 			a -= b;
 		}
 	}
-	return ans;
+	return make_pair(ans, a);
 }
 
+UMP operator/(const UMP &a, const UMP &b) {
+	return div(a, b).first;
+}
+
+UMP operator%(const UMP &a, const UMP &b) {
+	return div(a, b).second;
+}
+
+std::ostream &operator<<(std::ostream &out, UMP a) {
+	stack<char> s;
+	while (a != 0) {
+		pair<UMP, UMP> res = div(a, 10);
+		s.push(res.second[0] + '0');
+		a = res.first;
+	}
+	if (s.size() == 0) {
+		s.push('0');
+	}
+	while (!s.empty()) {
+		out << s.top();
+		s.pop();
+	}
+	return out;
+}
 
 UMP &UMP::check() {
 	while (this->at(size() - 1) == 0 && size() != 1) {
