@@ -181,7 +181,8 @@ UMP &UMP::operator-=(const UMP &b) {
 	return a = a - b;
 }
 
-UMP operator*(const UMP &a, const unsigned int b) {
+UMP operator*(const UMP &a, const unsigned int _b) {
+	unsigned long long b = _b;
 	UMP ans;
 	ans.assign(a.size() + 1,0);
 	unsigned long long res = 0;
@@ -248,7 +249,7 @@ UMP& UMP::operator*=(const unsigned int b) {
 }
 
 UMP &UMP::operator*=(const UMP &_b) {
-	*this = *this * _b;
+	return *this = *this * _b;
 }
 
 std::pair<UMP, UMP> div(UMP a, UMP b) {
