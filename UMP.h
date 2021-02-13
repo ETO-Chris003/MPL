@@ -35,6 +35,7 @@ public:
 
 public:
 	friend std::ostream &operator<<(std::ostream &out, UMP a);
+	friend std::istream &operator>>(std::istream &in, UMP &a);
 protected:
 	UMP &check();
 };

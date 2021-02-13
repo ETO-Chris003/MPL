@@ -1,6 +1,7 @@
 #include "UMP.h"
 #include <algorithm>
 #include <stack>
+#include <string>
 using namespace std;
 
 static const UMP zero(0), one(1);
@@ -303,6 +304,27 @@ std::ostream &operator<<(std::ostream &out, UMP a) {
 		s.pop();
 	}
 	return out;
+}
+
+std::istream &operator>>(std::istream &in, UMP &a) {
+	a = zero;
+	string str;
+	in >> str;
+	int i = 0;
+	if (str[0] == '-') {
+		i = 1;
+	}
+	for (; i < str.size(); ++i) {
+		if (str[i] < '0' || str[i] > '9') {
+			a = zero;
+			return in;
+		}
+		else {
+			a *= 10;
+			a += str[i] - '0';
+		}
+	}
+	return in;
 }
 
 UMP &UMP::check() {
