@@ -133,7 +133,7 @@ UMP UMP::operator&(const UMP &a) const {
 	return ret;
 }
 
-UMP &UMP::operator&=(unsigned int a) {
+UMP &UMP::operator&=(const UMP &a) {
 	return *this = *this & a;
 }
 
@@ -159,7 +159,7 @@ UMP UMP::operator|(const UMP &a) const {
 	return ret;
 }
 
-UMP &UMP::operator|=(unsigned int a) {
+UMP &UMP::operator|=(const UMP &a) {
 	return *this = *this | a;
 }
 
