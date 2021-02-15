@@ -144,35 +144,32 @@ UMP UMP::operator-(const UMP &b) const {
 		pa = this;
 		pb = &b;
 	}
-	UMP _a = (*pa);
-	int asize = _a.size();
-	for (int i = 0; i < asize; ++i) {
-		_a[i] = ~_a[i];
+	UMP _a = (*pa), _b = (*pb);
+	int asize = _a.size(), bsize = _b.size();
+	for (int i = 0; i < bsize; ++i) {
+		_b[i] = ~_b[i];
 	}
 #warning _b++ required
-	_a = _a + one;
+	_b = _b + one;
 	UMP ret;
-	ret = _a + *pb;
-	int retsize = ret.size();
-	for (int i = 0; i < retsize; ++i) {
-		ret[i] = ~ret[i];
-	}
-	ret += 1;
-	// _b.resize(bsize);
-	// UMP ret;
-
-	// ret.resize(pa->size() + 1);
+	ret.resize(pa->size() + 1);
+	union {
+		unsigned long long ull;
+		struct {
+			unsigned int lower, higher;
+		} split;
+	} res;
 	// unsigned long long res;
-	// for (int i = 0; i < _b.size(); ++i) {
-	// 	res = pa->at(i) + (unsigned long long)_b.at(i) + ret[i];
-	// 	ret[i] = (unsigned int)res;
-	// 	ret[i + 1] = res >> (8 * sizeof(unsigned int));
-	// }
-	// for (int i = _b.size(); i < pa->size(); ++i) {
-	// 	res = pa->at(i) + ((unsigned long long)(-1)) + (unsigned long long)ret[i];
-	// 	ret[i] = (unsigned int)res;
-	// 	ret[i + 1] = res >> (8 * sizeof(unsigned int));
-	// }
+	for (int i = 0; i < _b.size(); ++i) {
+		res.ull = pa->at(i) + (unsigned long long)_b.at(i) + ret[i];
+		ret[i] = res.split.lower;
+		ret[i + 1] = res.split.higher;
+	}
+	for (int i = _b.size(); i < pa->size(); ++i) {
+		res.ull = pa->at(i) + ((unsigned long long)(-1)) + (unsigned long long)ret[i];
+		ret[i] = res.split.lower;
+		ret[i + 1] = res.split.higher;
+	}
 	return ret.check();
 }
 
