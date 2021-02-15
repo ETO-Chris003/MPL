@@ -18,6 +18,9 @@ public:
 
 	UMP operator<<(unsigned int a) const;
 	UMP operator>>(unsigned int a) const;
+	UMP operator&(const UMP &a) const;
+	UMP operator|(const UMP &a) const;
+	UMP operator~() const;
 
 	UMP operator+(const UMP &b) const;
 	UMP &operator+=(const UMP &b);
@@ -31,7 +34,9 @@ public:
 
 	friend std::pair<UMP, UMP> div(UMP a, UMP b); // first for quotient and second for remainder
 	friend UMP operator/(const UMP &a, const UMP &b);
+	UMP &operator/=(const unsigned int b);
 	friend UMP operator%(const UMP &a, const UMP &b);
+	UMP &operator%=(const UMP &_b);
 
 public:
 	friend std::ostream &operator<<(std::ostream &out, UMP a);

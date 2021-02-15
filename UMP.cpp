@@ -68,6 +68,94 @@ bool UMP::operator<=(const UMP &b) const {
 	return !(*this > b);
 }
 
+UMP UMP::operator<<(unsigned int a) const {
+	if (a >= size() * 32) { 
+		return zero;
+	}
+	UMP ans(*this);
+	if (a / 32 != 0) {
+		ans.insert(ans.begin(), a / 32, 0);
+		a = a % 32;
+	}
+	if (a != 0) {
+		ans.resize(ans.size() + 1);
+		for (int i = ans.size() - 1; i > 0; --i) {
+			ans[i] |= (ans[i - 1] >> (32 - a));
+			ans[i - 1] <<= a;
+		}
+	}
+	return ans.check();
+}
+
+UMP UMP::operator>>(unsigned int a) const {
+	if (a >= size() * 32) { 
+		return zero;
+	}
+	UMP ans(*this);
+	if (a >= 32) {
+		ans.erase(ans.begin(), ans.begin() + (a / 32 - 1));
+		a = a % 32;
+	}
+	if (a != 0) {
+		for (int i = 0; i < ans.size() - 1; ++i) {
+			ans[i] >>= a;
+			ans[i] |= (ans[i + 1] << (32 - a));
+		}
+		ans[ans.size() - 1] >>= a;
+	}
+	return ans.check();
+}
+
+UMP UMP::operator&(const UMP &a) const {
+	const UMP *pa, *pb;
+	if (size() > a.size()) {
+		pa = this;
+		pb = &a;
+	}
+	else {
+		pa = &a;
+		pb = this;
+	}
+	const UMP &_a = *pa, &_b = *pb;
+	UMP ret;
+	ret.resize(_a.size());
+	for (int i = 0; i < _b.size(); ++i) {
+		ret[i] = _a[i] & _b[i];
+	}
+	return ret;
+}
+
+UMP UMP::operator|(const UMP &a) const {
+	const UMP *pa, *pb;
+	if (size() > a.size()) {
+		pa = this;
+		pb = &a;
+	}
+	else {
+		pa = &a;
+		pb = this;
+	}
+	const UMP &_a = *pa, &_b = *pb;
+	UMP ret;
+	ret.resize(_a.size());
+	for (int i = 0; i < _b.size(); ++i) {
+		ret[i] = _a[i] | _b[i];
+	}
+	for (int i = _b.size(); i < _a.size(); ++i) {
+		ret[i] = _a[i];
+	}
+	return ret;
+}
+
+UMP UMP::operator~() const {
+	UMP ret;
+	ret.resize(size());
+	for (int i = 0; i < size(); ++i) {
+		ret[i] = ~(*this)[i];
+	}
+	return ret;
+}
+
 UMP UMP::operator+(const UMP &b) const {
 	if (size() < b.size()) {
 		return b + (*this);
@@ -99,38 +187,6 @@ UMP &UMP::operator+=(const UMP &b) {
 	return a = a + b;
 }
 
-UMP UMP::operator<<(unsigned int a) const {
-	UMP ans(*this);
-	if (a / 32 != 0) {
-		ans.insert(ans.begin(), a / 32, 0);
-		a = a % 32;
-	}
-	if (a != 0) {
-		ans.resize(ans.size() + 1);
-		for (int i = ans.size() - 1; i > 0; --i) {
-			ans[i] |= (ans[i - 1] >> (32 - a));
-			ans[i - 1] <<= a;
-		}
-	}
-	return ans.check();
-}
-
-UMP UMP::operator>>(unsigned int a) const {
-	UMP ans(*this);
-	if (a >= 32) {
-		ans.erase(ans.begin(), ans.begin() + (a / 32 - 1));
-		a = a % 32;
-	}
-	if (a != 0) {
-		for (int i = 0; i < ans.size() - 1; ++i) {
-			ans[i] >>= a;
-			ans[i] |= (ans[i + 1] << (32 - a));
-		}
-		ans[ans.size() - 1] >>= a;
-	}
-	return ans.check();
-}
-
 UMP UMP::operator-(const UMP &b) const {
 	int cmpres = cmp(*this, b);
 	const UMP *pa = nullptr, *pb = nullptr; // require *pa > *pb
@@ -147,9 +203,10 @@ UMP UMP::operator-(const UMP &b) const {
 	}
 	UMP _a = (*pa), _b = (*pb);
 	int asize = _a.size(), bsize = _b.size();
-	for (int i = 0; i < bsize; ++i) {
-		_b[i] = ~_b[i];
-	}
+	// for (int i = 0; i < bsize; ++i) {
+	// 	_b[i] = ~_b[i];
+	// }
+	_b = ~_b;
 #warning _b++ required
 	_b = _b + one;
 	UMP ret;
@@ -282,8 +339,16 @@ UMP operator/(const UMP &a, const UMP &b) {
 	return div(a, b).first;
 }
 
+UMP &UMP::operator/=(const unsigned int b) {
+	return *this = *this / b;
+}
+
 UMP operator%(const UMP &a, const UMP &b) {
 	return div(a, b).second;
+}
+
+UMP &UMP::operator%=(const UMP &b) {
+	return *this = *this % b;
 }
 
 std::ostream &operator<<(std::ostream &out, UMP a) {
