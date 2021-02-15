@@ -1,6 +1,7 @@
 #include "UMP.h"
 #include <algorithm>
 #include <stack>
+#include <string>
 using namespace std;
 
 static const UMP zero(0), one(1);
@@ -178,7 +179,8 @@ UMP &UMP::operator-=(const UMP &b) {
 	return a = a - b;
 }
 
-UMP operator*(const UMP &a, const unsigned int b) {
+UMP operator*(const UMP &a, const unsigned int _b) {
+	unsigned long long b = _b;
 	UMP ans;
 	ans.assign(a.size() + 1,0);
 	unsigned long long res = 0;
@@ -245,7 +247,7 @@ UMP& UMP::operator*=(const unsigned int b) {
 }
 
 UMP &UMP::operator*=(const UMP &_b) {
-	*this = *this * _b;
+	return *this = *this * _b;
 }
 
 std::pair<UMP, UMP> div(UMP a, UMP b) {
@@ -301,9 +303,37 @@ std::ostream &operator<<(std::ostream &out, UMP a) {
 	return out;
 }
 
+std::istream &operator>>(std::istream &in, UMP &a) {
+	a = zero;
+	string str;
+	in >> str;
+	int i = 0;
+	if (str[0] == '-') {
+		i = 1;
+	}
+	for (; i < str.size(); ++i) {
+		if (str[i] < '0' || str[i] > '9') {
+			a = zero;
+			return in;
+		}
+		else {
+			a *= 10;
+			a += str[i] - '0';
+		}
+	}
+	return in;
+}
+
 UMP &UMP::check() {
-	while (this->at(size() - 1) == 0 && size() != 1) {
-		resize(size() - 1);
+//	while (this->at(size() - 1) == 0 && size() != 1) {
+//		resize(size() - 1);
+//	}
+    auto iter = begin();
+	while (*iter == 0 && iter != end()) {
+		iter++;
+	}
+	if (iter != begin()) {
+    	erase(begin(), iter);
 	}
 	return *this;
 }
