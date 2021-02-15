@@ -17,9 +17,13 @@ public:
 	bool operator<=(const UMP &b) const;
 
 	UMP operator<<(unsigned int a) const;
+	UMP &operator<<=(unsigned int a);
 	UMP operator>>(unsigned int a) const;
+	UMP &operator>>=(unsigned int a);
 	UMP operator&(const UMP &a) const;
+	UMP &operator&=(const UMP &a);
 	UMP operator|(const UMP &a) const;
+	UMP &operator|=(const UMP &a);
 	UMP operator~() const;
 
 	UMP operator+(const UMP &b) const;

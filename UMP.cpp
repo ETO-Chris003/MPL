@@ -87,6 +87,10 @@ UMP UMP::operator<<(unsigned int a) const {
 	return ans.check();
 }
 
+UMP &UMP::operator<<=(unsigned int a) {
+	return *this = *this << a;
+}
+
 UMP UMP::operator>>(unsigned int a) const {
 	if (a >= size() * 32) { 
 		return zero;
@@ -106,6 +110,10 @@ UMP UMP::operator>>(unsigned int a) const {
 	return ans.check();
 }
 
+UMP &UMP::operator>>=(unsigned int a) {
+	return *this = *this >> a;
+}
+
 UMP UMP::operator&(const UMP &a) const {
 	const UMP *pa, *pb;
 	if (size() > a.size()) {
@@ -123,6 +131,10 @@ UMP UMP::operator&(const UMP &a) const {
 		ret[i] = _a[i] & _b[i];
 	}
 	return ret;
+}
+
+UMP &UMP::operator&=(unsigned int a) {
+	return *this = *this & a;
 }
 
 UMP UMP::operator|(const UMP &a) const {
@@ -145,6 +157,10 @@ UMP UMP::operator|(const UMP &a) const {
 		ret[i] = _a[i];
 	}
 	return ret;
+}
+
+UMP &UMP::operator|=(unsigned int a) {
+	return *this = *this | a;
 }
 
 UMP UMP::operator~() const {
