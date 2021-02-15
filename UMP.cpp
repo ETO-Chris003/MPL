@@ -328,8 +328,15 @@ std::istream &operator>>(std::istream &in, UMP &a) {
 }
 
 UMP &UMP::check() {
-	while (this->at(size() - 1) == 0 && size() != 1) {
-		resize(size() - 1);
+//	while (this->at(size() - 1) == 0 && size() != 1) {
+//		resize(size() - 1);
+//	}
+    auto iter = begin();
+	while (*iter == 0 && iter != end()) {
+		iter++;
+	}
+	if (iter != begin()) {
+    	erase(begin(), iter);
 	}
 	return *this;
 }
