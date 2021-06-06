@@ -7,8 +7,9 @@ using namespace std;
 static const CUINT zero(0), one(1);
 
 CUINT::CUINT(unsigned long long a) {
-	push_back(a);
-	push_back(a >> (8 * sizeof(unsigned int)));
+	assign(2, 0);
+	(*this)[0] = a;
+	(*this)[1] = a >> 32;
 	check();
 }
 
@@ -324,6 +325,40 @@ CUINT &CUINT::operator*=(const CUINT &_b) {
 }
 
 std::pair<CUINT, CUINT> CUINT::div(CUINT a, CUINT b) {
+	switch (CUINT::cmp(a, b)) {
+	case -1: {
+		return make_pair(zero, a);
+	}
+	case 0: {
+		return make_pair(one, zero);
+	}
+	}
+	if (a.size() == 1) {
+		return make_pair(a[0] / b[0], a[0] % b[0]);
+	}
+	unsigned int d = a.size() - b.size();
+	unsigned int a1 = a[a.size() - 1], a2 = a[a.size() - 2], b1 = b[b.size() - 1];
+	CUINT ans;
+	if (a1 > b1) {
+		unsigned int ans1 = a1 / b1;
+		ans.assign(d + 1, 0);
+		ans[d] = ans1;
+		auto res = CUINT::div(a - b * ans, b);
+		return make_pair(ans + res.first, res.second);
+	}
+	else {
+		if (d == 0) {
+			return make_pair(one, a - b);
+		}
+		else {
+			unsigned int ans1 = ((unsigned long long)a1 << 32 + a2) / (b1 + 1);
+			ans.assign(d, 0);
+			ans[d - 1] = ans1;
+			auto res = CUINT::div(a - b * ans, b);
+			return make_pair(ans + res.first, res.second);
+		}
+	}
+/*
 	unsigned int d = a.size() - b.size();
 	if (d < 0) {
 		return make_pair(0, a);
@@ -357,6 +392,7 @@ std::pair<CUINT, CUINT> CUINT::div(CUINT a, CUINT b) {
 		auto res = CUINT::div(a - b * ans, b);
 		return make_pair(ans + res.first, res.second);
 	}
+*/
 /*
 	unsigned int d;
 	{
@@ -440,13 +476,13 @@ CUINT &CUINT::check() {
 //	while (this->at(size() - 1) == 0 && size() != 1) {
 //		resize(size() - 1);
 //	}
-    auto iter = begin();
-	while (*iter == 0 && iter != end()) {
-		iter++;
+	auto iter = end();
+	--iter;
+	while (*iter == 0 && iter != begin()) {
+		--iter;
 	}
-	if (iter != begin()) {
-    	erase(begin(), iter);
-	}
+	++iter;
+    	erase(iter, end());
 	return *this;
 }
 
