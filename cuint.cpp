@@ -328,40 +328,80 @@ CUINT &CUINT::operator*=(const CUINT &_b) {
 	return *this = *this * _b;
 }
 
-std::pair<CUINT, CUINT> CUINT::div(const CUINT &a, const CUINT &b) {
-	switch (CUINT::cmp(a, b)) {
-	case -1: {
-		return make_pair(zero, a);
-	}
-	case 0: {
-		return make_pair(one, zero);
-	}
-	}
-	if (a.size() == 1) {
-		return make_pair(a[0] / b[0], a[0] % b[0]);
-	}
-	unsigned int d = a.size() - b.size();
-	unsigned int a1 = a[a.size() - 1], a2 = a[a.size() - 2], b1 = b[b.size() - 1];
-	CUINT ans;
-	if (a1 > b1) {
-		unsigned int ans1 = a1 / b1;
-		ans.assign(d + 1, 0);
-		ans[d] = ans1;
-		auto res = CUINT::div(a - b * ans, b);
-		return make_pair(ans + res.first, res.second);
-	}
-	else {
-		if (d == 0) {
-			return make_pair(one, a - b);
+std::pair<CUINT, CUINT> CUINT::div(CUINT a, const CUINT &b) {
+	int cmpres;
+	CUINT ans = 0;
+	while ((cmpres = CUINT::cmp(a, b)) != -1) {
+		if (cmpres == 0) {
+			ans += one;
+			a = 0;
+			break;
+		}
+		if (a.size() == 1) {
+			ans += a[0] / b[0];
+			a = a[0] % b[0];
+			break;
+		}
+
+		unsigned int d = a.size() - b.size();
+		unsigned int a1 = a[a.size() - 1], a2 = a[a.size() - 2], b1 = b[b.size() - 1];
+		CUINT _ans;
+		if (a1 > b1) {
+			unsigned int ans1 = a1 / b1;
+			_ans.assign(d + 1, 0);
+			_ans[d] = ans1;
+			ans += _ans;
+			a -= b * _ans;
 		}
 		else {
-			unsigned int ans1 = (((unsigned long long)a1 << 32) + a2) / (b1 + 1);
-			ans.assign(d, 0);
-			ans[d - 1] = ans1;
-			auto res = CUINT::div(a - b * ans, b);
-			return make_pair(ans + res.first, res.second);
+			if (d == 0) {
+				ans += one;
+				a = a - b;
+				break;
+			}
+			else {
+				unsigned int ans1 = (((unsigned long long)a1 << 32) + a2) / (b1 + 1);
+				_ans.assign(d, 0);
+				_ans[d - 1] = ans1;
+				ans += _ans;
+				a -= b * _ans;
+			}
 		}
 	}
+	return make_pair(ans, a);
+	// switch (CUINT::cmp(a, b)) {
+	// case -1: {
+	// 	return make_pair(zero, a);
+	// }
+	// case 0: {
+	// 	return make_pair(one, zero);
+	// }
+	// }
+	// if (a.size() == 1) {
+	// 	return make_pair(a[0] / b[0], a[0] % b[0]);
+	// }
+	// unsigned int d = a.size() - b.size();
+	// unsigned int a1 = a[a.size() - 1], a2 = a[a.size() - 2], b1 = b[b.size() - 1];
+	// CUINT ans;
+	// if (a1 > b1) {
+	// 	unsigned int ans1 = a1 / b1;
+	// 	ans.assign(d + 1, 0);
+	// 	ans[d] = ans1;
+	// 	auto res = CUINT::div(a - b * ans, b);
+	// 	return make_pair(ans + res.first, res.second);
+	// }
+	// else {
+	// 	if (d == 0) {
+	// 		return make_pair(one, a - b);
+	// 	}
+	// 	else {
+	// 		unsigned int ans1 = (((unsigned long long)a1 << 32) + a2) / (b1 + 1);
+	// 		ans.assign(d, 0);
+	// 		ans[d - 1] = ans1;
+	// 		auto res = CUINT::div(a - b * ans, b);
+	// 		return make_pair(ans + res.first, res.second);
+	// 	}
+	// }
 /*
 	unsigned int d = a.size() - b.size();
 	if (d < 0) {
