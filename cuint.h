@@ -36,7 +36,7 @@ public:
 	CUINT &operator*=(const unsigned int b);
 	CUINT &operator*=(const CUINT &_b);
 
-	static std::pair<CUINT, CUINT> div(CUINT a, CUINT b); // first for quotient and second for remainder
+	static std::pair<CUINT, CUINT> div(const CUINT &a, const CUINT &b); // first for quotient and second for remainder
 	friend CUINT operator/(const CUINT &a, const CUINT &b);
 	CUINT &operator/=(const unsigned int b);
 	friend CUINT operator%(const CUINT &a, const CUINT &b);

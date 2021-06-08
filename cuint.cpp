@@ -245,6 +245,10 @@ CUINT CUINT::operator-(const CUINT &b) const {
 		ret[i] = res.split.lower;
 		ret[i + 1] = res.split.higher;
 	}
+	// ret.check();
+	auto endi = ret.end();
+	--endi;
+	ret.erase(endi, ret.end());
 	return ret.check();
 }
 
@@ -324,7 +328,7 @@ CUINT &CUINT::operator*=(const CUINT &_b) {
 	return *this = *this * _b;
 }
 
-std::pair<CUINT, CUINT> CUINT::div(CUINT a, CUINT b) {
+std::pair<CUINT, CUINT> CUINT::div(const CUINT &a, const CUINT &b) {
 	switch (CUINT::cmp(a, b)) {
 	case -1: {
 		return make_pair(zero, a);
@@ -351,7 +355,7 @@ std::pair<CUINT, CUINT> CUINT::div(CUINT a, CUINT b) {
 			return make_pair(one, a - b);
 		}
 		else {
-			unsigned int ans1 = ((unsigned long long)a1 << 32 + a2) / (b1 + 1);
+			unsigned int ans1 = (((unsigned long long)a1 << 32) + a2) / (b1 + 1);
 			ans.assign(d, 0);
 			ans[d - 1] = ans1;
 			auto res = CUINT::div(a - b * ans, b);
